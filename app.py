@@ -6,6 +6,9 @@ import requests     # for api
 import sqlite3      # for sql
 
 from datetime import datetime
+from PIL import Image
+from io import BytesIO
+import base64
 
 my_app = Flask(__name__)
 
@@ -19,8 +22,8 @@ my_df = pd.read_csv(CSV_DATA, skipfooter=1, engine='python')
 import requests
 from datetime import datetime
 
-def get_api_data(URL_ENDPOINT):
-    response = requests.get(URL_ENDPOINT)
+def get_api_data(url_endpoint):
+    response = requests.get(url_endpoint)
     
     if response.status_code == 200:
         data = response.json()
@@ -33,21 +36,23 @@ def get_api_data(URL_ENDPOINT):
         meal_thumb = meal['strMealThumb']
         youtube_link = meal['strYoutube']
         
-        # Extract ingredients and measures
-        ingredients = [(meal[f'strIngredient{i}'], meal[f'strMeasure{i}']) for i in range(1, 21) if meal[f'strIngredient{i}']]
+        # Download the image and encode it as base64
+        image_response = requests.get(meal_thumb)
+        image_base64 = base64.b64encode(image_response.content).decode('utf-8')
         
-        # Construct return text
-        return_text = f"Meal: {meal_name}\nCategory: {category}\nArea: {area}\nInstructions: {instructions}\nImage: {meal_thumb}\nYouTube Link: {youtube_link}\nIngredients:\n"
-        for ingredient, measure in ingredients:
-            return_text += f"- {measure} {ingredient}\n"
+        # Construct meal data dictionary
+        meal_data = {
+            'meal_name': meal_name,
+            'category': category,
+            'area': area,
+            'instructions': instructions,
+            'image_base64': image_base64,
+            'youtube_link': youtube_link
+        }
+        
+        return meal_data
     else:
-        return_text = 'Failed to fetch meal data'
-
-    return return_text
-
-# Get data from the API
-print(get_api_data(URL_ENDPOINT))
-
+        return None   
 
 def get_csv_data(my_df):
     my_df_top_ten = my_df.head(10)
@@ -85,7 +90,11 @@ def calculate():
 
 @my_app.route('/api1')
 def api1():
-    return render_template('api1.html', api_data=get_api_data(URL_ENDPOINT))
+    meal_data = get_api_data(URL_ENDPOINT)
+    if meal_data:
+        return render_template('api1.html', meal_data=meal_data)
+    else:
+        return 'Failed to fetch meal data'
 
 @my_app.route('/sql')
 def sql():
