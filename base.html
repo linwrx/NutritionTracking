@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}"> 
+    <title>My Site</title>
+</head>
+
+<body>
+   <div class="topnav">
+      <a class="active" href="{{ url_for('index') }}">CSV DATA</a>
+      <a href="{{ url_for('api1') }}">API DATA</a> 
+      <a href="{{ url_for('sql') }}">SQL DATA</a> 
+   </div>
+   <div>
+      <h1>Welcome</h1> 
+   </div>
+   {% block content %} {% endblock %}
+   <h1>Food Calorie Calculator</h1>
+   <form method="post">
+      <input type="string" name="food_name" required><br><br>
+      <button type="submit">Submit</button>
+     </form>
+     <p>{{ result|safe }}</p>
+
+</body>
+</html>
